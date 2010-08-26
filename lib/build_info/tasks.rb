@@ -37,6 +37,21 @@ namespace :build_info do
     current_build
   end
   
+  def get_version(build_info)
+    regex = Regexp.new(/(\d+)\.(\d+)(\.(\d+))?/)
+    match = regex.match(build_info['version'])
+    
+    raise "No or invalid version in build information" if match.nil?
+    
+    {:major => match[1], :minor => match[2], :patch => match[4]}
+  end
+  
+  def version_string(version_info)
+    return version_info[:major] if not version_info[:minor]
+    return "#{version_info[:major]}.#{version_info[:minor]}" if not version_info[:patch]
+    return "#{version_info[:major]}.#{version_info[:minor]}.#{version_info[:patch]}"
+  end
+  
   # Tasks
   
   desc "Initializes a new build."
@@ -62,25 +77,78 @@ namespace :build_info do
     }))
   end
   
-  desc "Updates the build's version."
-  task :version do
-    unless ENV.include?("BUILD_INFO_VERSION")
-      raise "Please specify the BUILD_INFO_VERSION variable (i.e - 1.0.2)"
+  namespace :version do
+  
+    namespace :bump do
+      desc "Bumps the build's major version."
+      task :major do
+        current_build = get_build_info
+        version_info = get_version(current_build)
+        
+        raise "No major version in build information." if version_info[:major].nil?
+        
+        version_info[:major] = version_info[:major].to_i + 1
+        version_info[:minor] = 0
+        version_info[:patch] = 0 if not version_info[:patch].nil?
+
+        BuildInfo::Build.build(current_build.merge({'version' => version_string(version_info)}))
+        puts "Bumped version."
+        BuildInfo::Build.print_build_info_color
+      end
+      
+      desc "Bumps the build's minor version."
+      task :minor do
+        current_build = get_build_info
+        version_info = get_version(current_build)
+        
+        raise "No minor version in build information." if version_info[:minor].nil?
+        
+        version_info[:minor] = version_info[:minor].to_i + 1
+        version_info[:patch] = 0 if not version_info[:patch].nil?
+
+        BuildInfo::Build.build(current_build.merge({'version' => version_string(version_info)}))
+        puts "Bumped version."
+        BuildInfo::Build.print_build_info_color
+      end
+      
+      desc "Bumps the build's major version."
+      task :patch do
+        current_build = get_build_info
+        version_info = get_version(current_build)
+
+        if not version_info[:patch].nil?
+          version_info[:patch] = version_info[:patch].to_i + 1
+        else
+          version_info[:patch] = 1
+        end
+        
+
+        BuildInfo::Build.build(current_build.merge({'version' => version_string(version_info)}))
+        puts "Bumped version."
+        BuildInfo::Build.print_build_info_color
+      end
     end
     
-    current_build = get_build_info
+    desc "Set the build version"
+    task :update do
+      unless ENV.include?("BUILD_INFO_VERSION")
+        raise "Please specify the BUILD_INFO_VERSION variable (i.e - 1.0.2)"
+      end
 
-    build_version = current_build['version']
-    unless not build_version.nil?
-      raise "No build version set, unable to increment."
+      current_build = get_build_info
+
+      build_version = current_build['version']
+      unless not build_version.nil?
+        raise "No build version set, unable to increment."
+      end
+
+      BuildInfo::Build.build(current_build.merge({
+        'version' => ENV['BUILD_INFO_VERSION']
+      }))
+
+      puts "Updated version."
+      BuildInfo::Build.print_build_info_color
     end
-
-    BuildInfo::Build.build(current_build.merge({
-      'version' => ENV['BUILD_INFO_VERSION']
-    }))
-    
-    puts "Updated version."
-    BuildInfo::Build.print_build_info_color
   end
   
   desc "Updates the build information."

@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
      "Rakefile",
      "TODO",
      "VERSION",
+     "build_info.gemspec",
      "lib/build_info.rb",
      "lib/build_info/build.rb",
      "lib/build_info/tasks.rb",
