@@ -21,6 +21,8 @@ namespace :build_info do
     end
     
     BuildInfo::Build.build(options)
+    
+    BuildInfo::Build.print_build_info_color
   end
   
   def update_build_info(build_info, name, var)
