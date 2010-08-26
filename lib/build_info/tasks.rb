@@ -157,8 +157,6 @@ namespace :build_info do
     
     BUILD_INFO_VARS.each do |k,v|
       update_build_info(current_build, k, ENV[v])
-      puts k
-      puts v
     end
 
     BuildInfo::Build.build(current_build)
